@@ -100,7 +100,21 @@ get_quakes_near_by_lat_lng(-20.57900, -140.9720, 0.6)
 #get_quakes_by_lat_lng(19.246, 145.616)
 ```
 
-#Map changey
+#Map functions
 ```{r}
+#install.packages( c("cowplot", "googleway", "ggplot2", "ggrepel","ggspatial", "libwgeom", "sf", "rnaturalearth", "rnaturalearthdata"))
+#install.packages("devtools")
+#install.packages("sf")
+#devtools::install_github("ropenscilabs/rnaturalearth")
+# load packages
+library(ggplot2)
+
+library(leaflet)
+
+max_num_points<- 650
+quakes
+# Show first 20 rows from the `quakes` dataset
+leaflet(data = quakes[1:max_num_points,]) %>% addTiles() %>%
+  addMarkers(~Longitude, ~Latitude, popup = ~as.character(Magnitude), label = ~as.character(Date))
 
 ```
