@@ -1,0 +1,106 @@
+---
+title: "project"
+output: html_document
+---
+#setup and preprocessing
+```{r}
+
+library(tidyverse)
+quakes <- read.csv('./DATA/earthquakes.csv')
+
+#remove columns with NA
+quakes <- quakes%>%
+  select(1:6, 9:10, 17:21)
+
+quakes <- quakes%>%
+  mutate(Date=as.Date(Date, "%m/%d/%Y"))
+head(quakes)
+
+```
+
+
+#helper functions
+```{r}
+
+
+
+##LOCATION
+get_quakes_by_lat_lng<- function(lat, lng){
+  l <- quakes%>%
+    filter(Latitude==lat & Longitude==lng)
+  return (l)
+}
+get_quakes_between_lat_lng_vals <- function(lat_minor, lat_major, lng_minor, lng_major){
+  return( quakes%>%
+            filter(Latitude>= lat_minor & Latitude<= lat_major &
+                     Longitude>= lng_minor & Longitude<= lng_major))
+}
+
+get_quakes_near_by_lat_lng <- function(lat, lng, dist_percentage){
+  amt_lat<-90*2*dist_percentage
+  amt_lng<- 180*2*dist_percentage
+  
+  lat_minor<- lat-amt_lat
+  lat_major<- lat+amt_lat
+  
+  lng_minor <- lng-amt_lng
+  lng_major <- lng+amt_lng
+  
+  return( get_quakes_between_lat_lng_vals(lat_minor, lat_major, lng_minor, lng_major))
+  
+}
+
+
+##MAGNITUDE
+get_quakes_by_mag <- function(mag){
+  return(quakes %>%
+           filter(Magnitude==mag))
+}
+
+
+get_quakes_by_min_mag <- function(mag){
+  return(quakes%>%
+           filter(Magnitude>= mag))
+}
+
+##DATES
+get_quakes_by_min_date <- function(date){
+  return(quakes%>%
+           filter(as.Date(Date)>=date))
+}
+
+get_quakes_by_max_date <- function(date){
+  date<- as.Date(date)
+  return(quakes%>%
+           filter(as.Date(Date)<=date))
+}
+
+get_quakes_on_date <- function(date){
+    return(quakes%>%
+           filter(as.Date(Date)<=date))
+}
+
+#DEPTH
+get_quakes_by_min_depth <- function(depth){
+  return(quakes%>%
+           filter(Depth>=depth))
+}
+get_quakes_by_max_depth <- function(depth){
+  return(quakes%>%
+           filter(Depth<=depth))
+}
+
+get_quakes_near_by_lat_lng(-20.57900, -140.9720, 0.6)
+#get_quakes_by_max_depth(70.0)
+
+#get_quakes_on_date("1965-01-05")
+#get_quakes_by_min_date("1965-01-05")
+#get_quakes_by_min_mag(3)
+#get_quakes_by_mag(6)
+#get_quakes_by_lat_lng(19.246, 145.616)
+```
+
+#Map changey
+```{r}
+
+```
