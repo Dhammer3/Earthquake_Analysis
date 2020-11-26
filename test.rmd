@@ -4,7 +4,7 @@ output: html_document
 ---
 #setup and preprocessing
 ```{r}
-
+#https://www.kaggle.com/usgs/earthquake-database
 library(tidyverse)
 quakes <- read.csv('./DATA/earthquakes.csv')
 
@@ -230,23 +230,30 @@ get_quakes_between_lat_lng_vals <- function(lat_minor, lat_major, lng_minor, lng
 
 ##SHINY FRONT END
 ui <- fluidPage(
-  titlePanel("Earthquakes by Intensity and Location (1965-1970)"),
+  titlePanel("Significant Earthquakes by Intensity and Location (1965-2016)"),
   sidebarLayout(
     sidebarPanel(
       
       
-      sliderInput("magInput", h3("Magnitude"), 5, 10, c(5, 7)),
+      sliderInput("magInput", h3("Magnitude"), 5.0, 10.0, c(5, 7), step=0.1),
       sliderInput("maxNumberToDisplay", h3("How Many Earthquakes?"),
                        min = 0, max = 650, value = 50),
       dateRangeInput("dates", h3("Date range:"),
                  start  = "1965-01-01",
-                 end    = "1970-12-31",
+                 end    = "2010-12-31",
                  min    = "1965-01-01",
-                 max    = "1970-12-31",
+                 max    = "2010-12-31",
                  format = "m/d/yyyy",
                  separator = " - "),
   sliderInput("latInput", h3("Latitiude Range"), -90, 90, c(-45, 45)),
-  sliderInput("lngInput", h3("Longitude Range"), -180, 180, c(-90, 90))
+  sliderInput("lngInput", h3("Longitude Range"), -180, 180, c(-90, 90)),
+  
+  checkboxGroupInput("checkGroup", 
+                              h3("Select Filters"), 
+                              choices = list("Magnitude" = "mag", 
+                                             "Dates" = "dates",
+                                             "Latitude and Longitude"="latlong"),
+                              selected = c("mag", "dates", "latlong")),
     ),
     mainPanel(
     
@@ -259,13 +266,24 @@ ui <- fluidPage(
 #SHINY BACK END
 server <- function(input, output) {
   output$mymap <- renderLeaflet({
+    selected_filters <- input$checkGroup
+
     
-    quakes <- get_quakes_by_mag_window(input$magInput[1],input$magInput[2])
+    if("mag" %in% selected_filters){
+      quakes <- get_quakes_by_mag_window(input$magInput[1],input$magInput[2])
+    }
     
-    quakes <- get_quakes_between_dates(input$dates[1], input$dates[2])
+    if("dates" %in% selected_filters){
+          quakes <- get_quakes_between_dates(input$dates[1], input$dates[2])
+
+    }
+    
+    if("latlong" %in% selected_filters){
+       quakes <- get_quakes_between_lat_lng_vals(input$latInput[1], input$latInput[2],
+                                              input$lngInput[1], input$lngInput[2])
+    }
     
     max_num_points <- input$maxNumberToDisplay
-    
     
     leaflet(data = quakes[1:max_num_points,]) %>% addTiles() %>%
     addMarkers(~Longitude, ~Latitude, popup = ~as.character(Magnitude), label = ~as.character(Date))
