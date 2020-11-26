@@ -57,6 +57,10 @@ get_quakes_by_mag <- function(mag){
            filter(Magnitude==mag))
 }
 
+get_quakes_by_mag_window <- function(mag1, mag2){
+  return(quakes %>%
+           filter(Magnitude>=mag1 & Magnitude<= mag2))
+}
 
 get_quakes_by_min_mag <- function(mag){
   return(quakes%>%
@@ -117,4 +121,131 @@ quakes
 leaflet(data = quakes[1:max_num_points,]) %>% addTiles() %>%
   addMarkers(~Longitude, ~Latitude, popup = ~as.character(Magnitude), label = ~as.character(Date))
 
+```
+
+```{r}
+library(shiny)
+library(tidyverse)
+library(ggplot2)
+library(leaflet)
+quakes <- read.csv('./DATA/earthquakes.csv')
+
+#remove columns with NA
+quakes <- quakes%>%
+  select(1:6, 9:10, 17:21)
+
+quakes <- quakes%>%
+  mutate(Date=as.Date(Date, "%m/%d/%Y"))
+
+ui <- fluidPage(
+  titlePanel("BC Liquor Store prices"),
+  sidebarLayout(
+    sidebarPanel(
+      
+      
+      sliderInput("priceInput", "Price", 0, 100, c(25, 40), pre = "$"),
+      radioButtons("typeInput", "Product type",
+                   choices = unique(bcl$Type),
+                   selected = "WINE"),
+      selectInput("countryInput", "Country",
+                  choices = unique(bcl$Country))
+    ),
+    mainPanel(
+    
+      plotOutput("coolplot"),
+      br(), br(),
+      tableOutput("results")
+    )
+  )
+)
+
+server <- function(input, output) {
+  
+  
+  output$coolplot <- renderPlot({
+    filtered <-
+      bcl %>%
+      filter(Price >= input$priceInput[1],
+             Price <= input$priceInput[2],
+             Type == input$typeInput,
+             Country == input$countryInput
+      )
+leaflet(data = quakes[1:max_num_points,]) %>% addTiles() %>%
+  addMarkers(~Longitude, ~Latitude, popup = ~as.character(Magnitude), label = ~as.character(Date))
+  })
+  
+  output$results <- renderTable({
+    filtered <-
+      bcl %>%
+      filter(Price >= input$priceInput[1],
+             Price <= input$priceInput[2],
+             Type == input$typeInput,
+             Country == input$countryInput
+      )
+    filtered
+  })
+  
+  
+}
+
+shinyApp(ui = ui, server = server)
+
+```
+#Example
+```{r}
+#SETUP
+library(shiny)
+library(tidyverse)
+library(leaflet)
+
+quakes <- read.csv('./DATA/earthquakes.csv')
+quakes <- quakes%>%
+  select(1:6, 9:10, 17:21)
+quakes <- quakes%>%
+  mutate(Date=as.Date(Date, "%m/%d/%Y"))
+head(quakes)
+
+max_num_points<- 650
+
+#FUNCTIONS
+get_quakes_by_mag_window <- function(mag1, mag2){
+  return(quakes %>%
+           filter(Magnitude>=mag1 ,Magnitude <= mag2))
+}
+
+
+##SHINY FRONT END
+ui <- fluidPage(
+  titlePanel("Earthquakes by Intensity and Location"),
+  sidebarLayout(
+    sidebarPanel(
+      
+      
+      sliderInput("magInput", "Magnitude", 5, 10, c(5, 7))
+    ),
+    mainPanel(
+    
+      leafletOutput("mymap")
+
+    )
+  )
+)
+
+#SHINY BACK END
+server <- function(input, output) {
+  output$mymap <- renderLeaflet({
+    
+    filtered <- get_quakes_by_mag_window(input$magInput[1],input$magInput[2])
+          leaflet(data = filtered[1:max_num_points,]) %>% addTiles() %>%
+    addMarkers(~Longitude, ~Latitude, popup = ~as.character(Magnitude), label = ~as.character(Date))
+
+    
+  })
+
+  
+  
+  
+}
+
+shinyApp(ui = ui, server = server)
 ```
